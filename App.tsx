@@ -139,6 +139,19 @@ const App: React.FC = () => {
   const [audioBaseUrl, setAudioBaseUrl] = useState("");
   const [quranSurahs, setQuranSurahs] = useState<any[]>([]);
 
+  // === FUNGSI ADD LOG ===
+  const addLog = (message: string, type: 'info' | 'success' | 'error' | 'warning' = 'info', mode: AppMode | 'system' | 'quran' = 'system') => {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+    setLogs(prev => [...prev, {
+      id: uuidv4(),
+      time: timeString,
+      message,
+      type,
+      mode: mode as any
+    }]);
+  };
+
   const handlePlayAudio = (surahId: number, audioUrl: string, surahName: string, reciterName: string, baseUrl?: string, surahsList?: any[]) => {
     if (audioRef.current) {
       if (currentSurahId !== surahId) {
@@ -148,6 +161,9 @@ const App: React.FC = () => {
         setCurrentReciterName(reciterName);
         if (baseUrl) setAudioBaseUrl(baseUrl);
         if (surahsList) setQuranSurahs(surahsList);
+        
+        // === SENSOR AUDIO MUROTTAL ===
+        addLog(`Memutar Surah: ${surahName} - ${reciterName}`, 'info', 'quran');
       }
       audioRef.current.play();
       setIsAudioPlaying(true);
@@ -357,6 +373,20 @@ const App: React.FC = () => {
   const handleNavigation = (tab: AppMode | 'logs' | 'apikeys' | 'quran') => {
     setActiveTab(tab);
     window.scrollTo(0, 0);
+    
+    // === SENSOR NAVIGASI MENU UTAMA ===
+    const tabNameMap: Record<string, string> = {
+        'apikeys': 'API Configuration',
+        'quran': 'Murottal Al-Quran',
+        'idea': 'Idea Generation',
+        'prompt': 'Prompt Engineering',
+        'metadata': 'Metadata Extraction',
+        'qc': 'Quality Control',
+        'logs': 'System Logs'
+    };
+    if (tab !== 'logs') { // Jangan log kalau cuma buka tab logs biar gak menuh-menuhin
+        addLog(`Membuka ruang kerja: ${tabNameMap[tab] || tab.toUpperCase()}`, 'info', 'system');
+    }
   };
 
   const formatTime = (date: Date) => {
@@ -371,19 +401,6 @@ const App: React.FC = () => {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
-  };
-
-  // === FUNGSI ADD LOG DENGAN TAMBAHAN MILIDETIK BIAR REALTIME BGT ===
-  const addLog = (message: string, type: 'info' | 'success' | 'error' | 'warning' = 'info', mode: AppMode | 'system' = 'system') => {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-    setLogs(prev => [...prev, {
-      id: uuidv4(),
-      time: timeString,
-      message,
-      type,
-      mode
-    }]);
   };
 
   const handleClearLogs = () => {
@@ -1349,7 +1366,6 @@ const App: React.FC = () => {
                       />
                   )}
 
-                  {/* === PANGGILAN KE KOMPONEN LOG BARU KITA === */}
                   {activeTab === 'logs' && (
                       <LogPanel 
                           logs={logs} 
@@ -1357,7 +1373,6 @@ const App: React.FC = () => {
                           onCopyLogs={handleCopyLogs} 
                       />
                   )}
-                  {/* =========================================== */}
               </div>
           </div>
 
