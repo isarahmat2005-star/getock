@@ -133,7 +133,7 @@ const PromptSettings: React.FC<Props> = ({ settings, setSettings, isProcessing, 
         )}
       </div>
 
-      {/* DIBUAT RAPAT: Description & Quantity dibungkus gap-2 */}
+      {/* DIBUAT RAPAT: Description, Negative Prompt & Quantity dibungkus gap-2 */}
       <div className="flex flex-col gap-2">
           {/* Description */}
           <div>
@@ -146,6 +146,21 @@ const PromptSettings: React.FC<Props> = ({ settings, setSettings, isProcessing, 
               value={settings.promptDescription}
               onChange={(e) => handleChange('promptDescription', e.target.value)}
               disabled={isProcessing}
+            />
+          </div>
+
+          {/* === KOTAK MERAH NEGATIVE PROMPT (BARU) === */}
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <label className={`${labelClass} text-red-600 font-bold`}>Negative Prompt (Kata Terlarang)</label>
+            </div>
+            <textarea
+              className="w-full text-sm p-2 rounded resize-none h-14 border border-red-200 bg-red-50/30 focus:ring-2 focus:ring-red-500 focus:outline-none focus:border-red-500 transition-all disabled:bg-gray-100 disabled:text-gray-400 placeholder:text-red-300/70"
+              placeholder="Contoh: blur, deformed, 6 fingers, bad anatomy, ugly..."
+              value={settings.negativePrompt || ''}
+              onChange={(e) => handleChange('negativePrompt', e.target.value)}
+              disabled={isProcessing}
+              spellCheck={false}
             />
           </div>
 
