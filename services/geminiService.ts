@@ -104,33 +104,29 @@ const compressImage = async (file: File): Promise<{ inlineData: { data: string; 
 };
 
 const SUPREME_METADATA_PROTOCOL = `
-### SUPREME STOCK METADATA SEO PROTOCOL (LITERAL ANALYSIS ONLY) ###
-Anda adalah Analis SEO Microstock Elit. Ikuti protokol ketat ini:
+### SUPREME STOCK METADATA SEO PROTOCOL (SHUTTERSTOCK STRICT MODE) ###
+Anda adalah Analis SEO Microstock Elit. Ikuti protokol ketat ini tanpa pengecualian:
 
-STEP 1: VISUAL IDENTITY LOCK (MANDATORY)
-- Identifikasi 3 objek LITERAL paling menonjol.
-- Identifikasi warna asli, lingkungan, dan aksi fisik.
-- Metadata WAJIB berakar HANYA dari observasi objek nyata ini.
+STEP 1: VISUAL IDENTITY LOCK (CCTV MODE - NO HALU)
+- Bertindaklah seperti kamera CCTV. Deskripsikan HANYA objek fisik, warna, bentuk, dan aksi yang BENAR-BENAR TERLIHAT.
+- HARAM berhalusinasi, menebak cerita, atau menebak perasaan/makna abstrak yang tidak ada wujud fisiknya.
 
 STEP 2: RUMUS PENULISAN JUDUL & DESKRIPSI
 - TITLE FORMULA: [Nama Objek Utama] + [Setting/Kondisi Visual Langsung] + [Tujuan/Konteks Komersial].
-- DESCRIPTION FORMULA (MANDATORY RULE): DESCRIPTION WAJIB berupa PARAFRASE dari TITLE. Maknanya harus sama persis, TETAPI DILARANG KERAS MENYALIN KATA-KATA TITLE! Anda WAJIB menggunakan sinonim dan mengubah struktur tata bahasanya. Jika Title Anda berbunyi "Pria tersenyum di taman", maka Description BISA berbunyi "Seorang laki-laki menunjukkan ekspresi bahagia saat berada di area terbuka hijau". ZERO COPY-PASTE ALLOWED!
+- DESCRIPTION FORMULA: DESCRIPTION WAJIB berupa PARAFRASE dari TITLE. Maknanya harus sama persis, TETAPI DILARANG KERAS MENYALIN KATA-KATA TITLE SECARA IDENTIK!
 - KATA PERTAMA: Harus berupa nama objek literal (Subjek Utama).
 - NO OPINIONS: Dilarang keras kata-kata seperti "beautiful, stunning, amazing, best quality".
-- DESKRIPSI TEKNIS: Fokus pada material, pencahayaan, dan tekstur.
 
-STEP 3: LOGIKA KATA KUNCI (SEO HIERARCHY)
+STEP 3: LOGIKA KATA KUNCI (STRICT 1-WORD & ZERO SPAM)
 - TOTAL: Tepat [KW_COUNT] kata kunci.
-- TOP 20 SEO: 20 kata kunci pertama WAJIB merupakan kata kunci pokok yang paling relevan, akurat sesuai visual, dan memiliki pencarian/nilai komersial tertinggi.
-- WAJIB 1 KATA: Setiap kata kunci HANYA BOLEH 1 KATA. Dilarang keras menggunakan frasa (2 kata atau lebih).
-- UNIQUE / ANTI-REDUNDANT: DILARANG mengulang kata yang sama. Setiap kata harus 100% unik.
-- ZERO HALLUCINATION: Jangan tulis objek yang tidak ada di dalam aset.
+- WAJIB 1 KATA TUNGGAL: Setiap kata kunci HARAM terdiri dari 2 kata atau lebih. Pisahkan setiap 1 kata tunggal dengan koma. (Contoh SALAH: "red apple". Contoh BENAR: "red, apple").
+- UNIQUE / ZERO SPAM: DILARANG mengulang kata yang sama atau variasi kata dasarnya (misal: Jangan menulis "run, running, runner" secara bersamaan. Pilih SATU yang terkuat). Setiap kata harus 100% unik.
+- TOP 20 SEO: 20 kata kunci pertama WAJIB yang paling relevan secara visual.
 
-STEP 4: BLACKLIST (STRICT PROHIBITION)
-- DILARANG menulis spesifikasi teknis (4K, HD, 8K, Resolution).
-- DILARANG menulis jenis file (Vector, AI, Photo, Footage, EPS).
-- DILARANG menulis nama brand, logo, atau tokoh publik.
-- DILARANG menggunakan template umum.
+STEP 4: SHUTTERSTOCK BLACKLIST (HARAM MUTLAK)
+- NO FILE TYPES/STYLES: DILARANG KERAS menulis jenis file atau gaya seni di Title, Deskripsi, maupun Keyword (HARAM: vector, illustration, photo, drawing, digital art, 3d render, clipart).
+- NO TECH SPECS: DILARANG menulis spesifikasi kamera/alat (HARAM: 4k, 8k, hd, resolution, gopro, drone, 60fps, slow motion, timelapse).
+- NO TRADEMARKS/BRANDS: DILARANG KERAS menyebutkan nama merk, logo, atau tokoh publik. Ganti menjadi istilah generik! (Contoh: "iPhone" -> "smartphone", "Macbook" -> "laptop", "Nike" -> "shoes").
 
 STEP 5: ASSIGN TRIPLE CATEGORY (MANDATORY)
 Anda WAJIB memberikan TIGA jenis kategori untuk 3 platform yang berbeda secara bersamaan:
@@ -403,6 +399,7 @@ export const generateMetadataForFile = async (
         
         const cleanAndSliceKeywords = (rawKws: string) => {
             if (!rawKws) return "";
+            // Pisau cukur kita membelah berdasarkan koma maupun spasi, jadi otomatis frasa terpecah jadi kata tunggal
             let arr = rawKws.replace(/,/g, ' ').split(/\s+/).map(k => k.trim().toLowerCase()).filter(k => k.length > 2);
             
             if (settings.negativeMetadata) {
