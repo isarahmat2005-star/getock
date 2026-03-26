@@ -116,9 +116,17 @@ const LogPanel: React.FC<LogPanelProps> = ({ logs, onClearLogs, onCopyLogs }) =>
                                 <div className="flex flex-col gap-2">
                                     {logs.map(log => (
                                         <div key={log.id} className="flex items-start gap-2 break-all border-b border-gray-50/50 pb-1 last:border-0">
-                                            <span className={`mt-0.5 shrink-0 rounded px-1 text-[10px] font-medium ${log.mode === 'idea' ? 'bg-amber-100/80 text-amber-700' : log.mode === 'prompt' ? 'bg-fuchsia-100/80 text-fuchsia-700' : log.mode === 'metadata' ? 'bg-blue-100/80 text-blue-700' : 'bg-gray-100/80 text-gray-600'}`}>
-                                                {log.mode?.substring(0,4).toUpperCase()}
+                                            {/* === RUMUS WARNA TAG DI SINI === */}
+                                            <span className={`mt-0.5 shrink-0 rounded px-1.5 text-[10px] font-black uppercase tracking-widest ${
+                                                log.mode === 'system' 
+                                                ? 'bg-gray-100/80 text-gray-500 border border-gray-200' 
+                                                : log.mode === 'quran'
+                                                    ? 'bg-emerald-50/80 text-emerald-600 border border-emerald-200'
+                                                    : 'bg-blue-50/80 text-blue-600 border border-blue-200'
+                                            }`}>
+                                                {log.mode?.substring(0,4)}
                                             </span>
+                                            {/* ================================ */}
                                             <div className="flex min-w-0 flex-1 flex-col">
                                                 <span className="font-mono text-[10px] text-gray-400/80">{log.time}</span>
                                                 <span className={`text-xs ${log.type === 'error' ? 'text-red-600 font-bold' : log.type === 'success' ? 'text-green-600 font-semibold' : log.type === 'warning' ? 'text-orange-600 font-semibold' : 'text-gray-700'} ${logViewMode === 'clipped' ? 'line-clamp-2 overflow-hidden' : 'break-words whitespace-pre-wrap'}`}>
