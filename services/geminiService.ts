@@ -250,7 +250,13 @@ export const generateMetadataForFile = async (
            required: ["en_prompt", "ind_prompt"]
         };
 
-        const instruksiTambahan = settings.promptDescription ? `\nInstruksi Tambahan dari User: ${settings.promptDescription}` : "";
+        let instruksiTambahan = settings.promptDescription ? `\nInstruksi Tambahan dari User: ${settings.promptDescription}` : "";
+        
+        // === SUNTIKAN KODE BARU UNTUK NEGATIVE PROMPT ===
+        if (settings.negativePrompt && settings.negativePrompt.trim() !== '') {
+            instruksiTambahan += `\n\nNEGATIVE PROMPT (HINDARI KATA-KATA INI): ${settings.negativePrompt}`;
+        }
+        // ===============================================
         
         if (settings.promptPlatform === 'text') {
             systemInstruction = `Bertindak sebagai AI Prompt Engineer profesional. Tugas Anda adalah mengembangkan ide pendek menjadi sebuah prompt gambar/video yang sangat detail, spesifik, dan memukau untuk AI Image Generator (seperti Midjourney atau Stable Diffusion).
