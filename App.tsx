@@ -1185,7 +1185,7 @@ const App: React.FC = () => {
 
       <header className="w-full bg-white border-b border-gray-200 px-4 h-16 flex items-center justify-between shrink-0 shadow-sm z-50 relative">
       <div className="flex items-center">
-        <h1 className="text-5xl font-share-tech font-bold bg-gradient-to-r from-blue-600 to-cyan-400 bg-clip-text text-transparent tracking-tighter leading-none select-none">IsaProject</h1>
+        <h1 className="text-5xl font-share-tech font-bold bg-gradient-to-r from-blue-600 to-cyan-400 bg-clip-text text-transparent tracking-tighter leading-none select-none">GeTock</h1>
       </div>
         <div className="flex flex-col items-end justify-center text-gray-800">
            <span className="text-2xl leading-none tracking-tight tabular-nums">{formatTime(currentTime)}</span>
