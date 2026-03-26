@@ -237,10 +237,11 @@ const MetadataSettings: React.FC<Props> = ({ settings, setSettings, isProcessing
         </div>
         
         <div className="col-span-1">
-          <label className={labelClass}>Negative {titleLabel} & Keyword</label>
+          {/* UBAH LABEL JADI LEBIH TEGAS DI SINI */}
+          <label className={`${labelClass} text-red-600 font-bold`}>Negative Metadata (Kata Terlarang)</label>
           <textarea
-            className={`${areaClass} resize-none text-xs font-mono scrollbar-thin scrollbar-thumb-gray-200 leading-tight`}
-            placeholder="Daftar kata yang dilarang muncul..."
+            className={`${areaClass} resize-none text-xs font-mono scrollbar-thin scrollbar-thumb-gray-200 leading-tight border-red-200 bg-red-50/30 focus:ring-red-500 focus:border-red-500`}
+            placeholder="Contoh: vector, illustration, photo, 4k, hd, logo..."
             value={settings.negativeMetadata}
             onChange={(e) => handleChange('negativeMetadata', e.target.value)}
             disabled={isProcessing}
