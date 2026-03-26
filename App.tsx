@@ -244,6 +244,7 @@ const App: React.FC = () => {
       ideaWorkerCount: 50,
       promptIdea: '',
       promptDescription: '',
+      negativePrompt: '',
       promptQuantity: 30,
       promptPlatform: 'text',
       promptSourceFiles: [],
