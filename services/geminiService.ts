@@ -217,7 +217,7 @@ export const generateMetadataForFile = async (
         };
 
     } else if (mode === 'idea') {
-        temperature = 0.9;
+        temperature = 1.0; // Kita mentokkan suhunya biar AI makin liar dan kreatif
         outputSchema = {
            type: Type.OBJECT,
            properties: {
@@ -227,7 +227,8 @@ export const generateMetadataForFile = async (
            required: ["en_idea", "ind_idea"]
         };
 
-        const kategoriDipilih = settings.ideaCategory;
+        // Kalau "auto", paksa AI mikir lintas kategori
+        const kategoriDipilih = settings.ideaCategory === 'auto' ? 'SANGAT ACAK/RANDOM (Bebas pilih: Teknologi, Alam, Bisnis, Makanan, Medis, Lifestyle, dll)' : settings.ideaCategory;
         const instruksiPengguna = settings.ideaCustomInstruction;
 
         systemInstruction = `Bertindak sebagai Senior Microstock Analyst. Berikan 1 ide konsep visual bernilai komersial tinggi.
@@ -237,7 +238,12 @@ export const generateMetadataForFile = async (
         2. JANGAN sertakan judul, deskripsi panjang, atau keyword.
         3. Hasilkan dalam field JSON 'en_idea' dan 'ind_idea'.`;
 
-        promptText = `INSTRUKSI TAMBAHAN DARI PENGGUNA: \n"${instruksiPengguna ? instruksiPengguna : "Buat konsep serealistis mungkin."}"`;
+        // INJEKSI ID ACAK BIAR HASILNYA NGGAK KEMBAR!
+        promptText = `TUGAS ID: ${fileItem.id}
+(CRITICAL RULE: Gunakan huruf/angka acak pada ID di atas sebagai inspirasi tak terlihat. Anda WAJIB memberikan subjek, lokasi, dan aktivitas yang 100% berbeda dari ide klise pada umumnya!).
+
+INSTRUKSI DARI PENGGUNA: 
+"${instruksiPengguna ? instruksiPengguna : "Buat konsep visual serealistis mungkin. Hindari ide pasaran."}"`;
     
     } else if (mode === 'prompt') {
         temperature = 0.8;
