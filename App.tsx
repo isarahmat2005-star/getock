@@ -840,10 +840,8 @@ const App: React.FC = () => {
       addLog(`Running ${maxConcurrency} workers using ${settings.apiProvider}...`, 'info', mode);
   
       for (let i = 0; i < maxConcurrency; i++) {
-        // Ambil delay dari setting pengguna (jadikan milidetik). Default 3 detik kalau kosong.
         const userDelayMs = (settings.apiDelay && settings.apiDelay >= 1 ? settings.apiDelay : 3) * 1000;
         
-        // Kalau mode lokal (tanpa internet), berangkatnya ngebut. Kalau pakai API, beri jarak sesuai setting!
         const startDelay = isLocalExtraction ? (i * 50) : (i * userDelayMs);
         
         setTimeout(() => spawnWorker(i + 1, mode), startDelay);
