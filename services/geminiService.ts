@@ -115,9 +115,10 @@ STEP 1: VISUAL IDENTITY LOCK (CCTV MODE - NO HALU)
 
 STEP 2: RUMUS PENULISAN JUDUL & DESKRIPSI
 - TITLE FORMULA: [Nama Objek Utama] + [Setting/Kondisi Visual Langsung] + [Tujuan/Konteks Komersial].
+- NO COMMAS: DILARANG KERAS menggunakan tanda koma (,) di dalam kalimat Title maupun Description! Buat kalimat mengalir natural dan padu.
 - DESCRIPTION FORMULA: DESCRIPTION WAJIB berupa PARAFRASE dari TITLE. Maknanya harus sama persis, TETAPI DILARANG KERAS MENYALIN KATA-KATA TITLE SECARA IDENTIK!
 - KATA PERTAMA: Harus berupa nama objek literal (Subjek Utama).
-- NO OPINIONS: Dilarang keras kata-kata seperti "beautiful, stunning, amazing, best quality".
+- STRICT NO OPINIONS & BLACKLIST: Dilarang menggunakan kata sifat opini/pujian subjektif. Anda WAJIB mematuhi dan menghindari setiap kata yang tercantum pada "NEGATIVE METADATA (Kata Terlarang)" yang diberikan oleh user di bagian instruksi tambahan!
 
 STEP 3: LOGIKA KATA KUNCI (STRICT 1-WORD & ZERO SPAM)
 - TOTAL: Tepat [KW_COUNT] kata kunci.
@@ -202,7 +203,7 @@ export const generateMetadataForFile = async (
             promptText += `\nINFO TAMBAHAN DARI USER (Gunakan jika relevan): \nTitle/Description Base: ${settings.customTitle}\nKeywords: ${settings.customKeyword}`;
         }
         if (settings.negativeMetadata) {
-            promptText += `\nNEGATIVE CONTEXT (Hindari kata-kata ini): ${settings.negativeMetadata}`;
+            promptText += `\nNEGATIVE METADATA (Kata Terlarang): ${settings.negativeMetadata}`;
         }
 
         // UPDATE SCHEMA AGAR AI MENGHASILKAN categoryDream
@@ -430,8 +431,11 @@ INSTRUKSI DARI PENGGUNA:
         
         const cleanAndSliceKeywords = (rawKws: string) => {
             if (!rawKws) return "";
-            // Pisau cukur kita membelah berdasarkan koma maupun spasi, jadi otomatis frasa terpecah jadi kata tunggal
-            let arr = rawKws.replace(/,/g, ' ').split(/\s+/).map(k => k.trim().toLowerCase()).filter(k => k.length > 2);
+            // CURI TRIK TETANGGA: Hapus tanda strip (-) dan ganti jadi spasi
+            let sanitizedKws = rawKws.replace(/-/g, ' ');
+
+            // Pisau cukur membelah berdasarkan koma maupun spasi
+            let arr = sanitizedKws.replace(/,/g, ' ').split(/\s+/).map(k => k.trim().toLowerCase()).filter(k => k.length > 2)
             
             if (settings.negativeMetadata) {
                 const negWords = settings.negativeMetadata.split(',').map(w => w.trim().toLowerCase()).filter(w => w.length > 0);
