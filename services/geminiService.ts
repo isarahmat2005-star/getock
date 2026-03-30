@@ -509,22 +509,45 @@ INSTRUKSI DARI PENGGUNA:
   }
 };
 
-export const translateMetadataContent = async (content: { title: string; keywords: string }, sourceLanguage: Language, providedApiKey: string = "", apiProvider: string = 'GEMINI CANVAS', groqModel: string = 'qwen/qwen3-32b'): Promise<{ title: string; keywords: string }> => {
-  const actualApiKey = providedApiKey || process.env.API_KEY || process.env.GEMINI_API_KEY || 'internal_canvas_key';
-  
+export const smartFixMetadata = async (
+  content: { title?: string; description?: string; keywords?: string },
+  sourceLanguage: Language,
+  settings: AppSettings,
+  providedApiKey: string = ""
+): Promise<{ en: any; ind: any }> => {
+  const isCanvasMode = settings.apiProvider === 'GEMINI CANVAS';
+  const actualApiKey = isCanvasMode 
+      ? (process.env.API_KEY || process.env.GEMINI_API_KEY || 'internal_canvas_key') 
+      : providedApiKey;
+      
   if (!actualApiKey) {
-      console.warn("Translation skipped: No API Key available");
-      return content; 
+      throw new Error("No API Key available for Auto-Fix");
   }
 
-  const instruction = `Translate the following text to ${sourceLanguage === 'ENG' ? 'Indonesian' : 'English'}. Return ONLY valid JSON: {"title": "translated string"}. Text: "${content.title}"`;
+  const instruction = `Tugas Anda adalah sebagai Proofreader & Translator Agensi Microstock. User baru saja mengedit metadata secara manual.
+Tugas Mutlak Anda:
+1. TRANSLATION: Jika input dalam Bahasa Indonesia/campuran, terjemahkan ke Bahasa Inggris Profesional untuk field 'en'. Field 'ind' berisi Bahasa Indonesia.
+2. TITLE & DESCRIPTION: WAJIB perbaiki grammar. DILARANG KERAS menggunakan tanda koma (,) di field ini!
+3. KEYWORDS: Hapus tanda strip (-). Format harus kata tunggal dipisah koma.
+4. BLACKLIST: HAPUS kata-kata ini jika ada: ${settings.negativeMetadata}
 
-  if (apiProvider === 'GROQ API') {
+Input User (${sourceLanguage}):
+Title: "${content.title || ''}"
+Description: "${content.description || ''}"
+Keywords: "${content.keywords || ''}"
+
+Return ONLY valid JSON format:
+{
+  "en": { "title": "string", "description": "string", "keywords": "string" },
+  "ind": { "title": "string", "description": "string", "keywords": "string" }
+}`;
+
+  if (settings.apiProvider === 'GROQ API') {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${actualApiKey}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-              model: groqModel,
+              model: settings.geminiModel || 'qwen/qwen3-32b',
               messages: [{ role: "user", content: instruction }],
               temperature: 0.1,
               response_format: { type: "json_object" }
@@ -533,17 +556,27 @@ export const translateMetadataContent = async (content: { title: string; keyword
       if (response.ok) {
           const data = await response.json();
           const cleanJson = data.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim();
-          return { title: JSON.parse(cleanJson).title, keywords: content.keywords };
+          return JSON.parse(cleanJson);
       }
-      return content;
+      throw new Error("Groq Auto-Fix Failed");
   } else {
       const ai = new GoogleGenAI({ apiKey: actualApiKey });
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash', 
+        model: settings.geminiModel || 'gemini-2.5-flash', 
         contents: instruction,
-        config: { responseMimeType: "application/json", responseSchema: { type: Type.OBJECT, properties: { title: { type: Type.STRING } } } }
+        config: { 
+            temperature: 0.1,
+            responseMimeType: "application/json", 
+            responseSchema: { 
+                type: Type.OBJECT, 
+                properties: { 
+                    en: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, description: { type: Type.STRING }, keywords: { type: Type.STRING } } },
+                    ind: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, description: { type: Type.STRING }, keywords: { type: Type.STRING } } }
+                } 
+            } 
+        }
       });
-      return { title: JSON.parse(response.text).title, keywords: content.keywords };
+      return JSON.parse(response.text);
   }
 };
 
