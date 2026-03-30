@@ -233,6 +233,7 @@ const App: React.FC = () => {
       negativeMetadata: DEFAULT_FORBIDDEN_WORDS,
       ideaNegativeContext: IDEA_FORBIDDEN_WORDS,
       metadataPlatform: 'Adobe Stock',
+      metadataCustomInstruction: '',
       titleMin: 50, 
       titleMax: 100,
       slideKeyword: 40,
