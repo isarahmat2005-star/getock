@@ -96,21 +96,23 @@ const FileCard: React.FC<Props> = ({
 
   const toggleEdit = () => {
     if (isEditing) {
-      if (editTitle !== currentTitle) onUpdate(item.id, 'title', editTitle, language);
-      if (editDescription !== currentDescription) onUpdate(item.id, 'description', editDescription, language);
-      if (editKeywords !== currentKeywords) onUpdate(item.id, 'keywords', editKeywords, language);
+      // 1. Selalu tembak Update untuk Teks agar memancing Satpam AI bekerja
+      onUpdate(item.id, 'title', editTitle, language);
+      onUpdate(item.id, 'description', editDescription, language);
+      onUpdate(item.id, 'keywords', editKeywords, language);
       
-      const newCategory = isShutterstock 
-          ? [editCategory1, editCategory2].filter(Boolean).join(', ') 
-          : editCategory1;
-
-      if (newCategory !== currentCategory && usesCategory) {
-          onUpdate(item.id, isShutterstock ? 'categoryShutter' : 'category', newCategory, language);
+      // 2. Simpan Kategori Adobe/Shutter (Jika platform cocok)
+      if (usesCategory) {
+          const newCategory = isShutterstock 
+              ? [editCategory1, editCategory2].filter(Boolean).join(', ') 
+              : editCategory1;
+          if (newCategory !== currentCategory) {
+              onUpdate(item.id, isShutterstock ? 'categoryShutter' : 'category', newCategory, language);
+          }
       }
 
-      // SIMPAN KATEGORI DREAMSTIME
+      // 3. Simpan Kategori Dreamstime (Jika platform cocok)
       if (isDreamstime) {
-          // Bersihkan item kosong sebelum di-join
           const newDreamCategory = [editCategoryDream1, editCategoryDream2, editCategoryDream3]
                                       .filter(Boolean).join(', ');
           if (newDreamCategory !== currentCategoryDream) {
@@ -123,7 +125,7 @@ const FileCard: React.FC<Props> = ({
       setIsEditing(true);
     }
   };
-
+  
   const isCompleted = item.status === ProcessingStatus.Completed;
   const isProcessing = item.status === ProcessingStatus.Processing;
   const isFailed = item.status === ProcessingStatus.Failed;
