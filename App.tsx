@@ -594,11 +594,11 @@ const App: React.FC = () => {
     }));
   };
 
-  // FUNGSI BARU UNTUK BUNDLING UPDATE TEKS & AUTO-FIX AI (DENGAN ANIMASI)
+  // 🚀 FUNGSI BARU BUNDLING AUTO-FIX AI (ANIMASI LOKAL DI KARTU SAJA)
   const handleSaveAllText = async (id: string, textData: { title: string, description: string, keywords: string }, language: Language) => {
     if (activeTab === 'logs' || activeTab === 'apikeys' || activeTab === 'quran') return;
 
-    // 1. Simpan mentahan & UBAH STATUS KARTU INI SAJA JADI PROCESSING (Biar logo spinner muncul)
+    // 1. Simpan Teks Mentahan & Ubah Kartu Ini Saja Jadi Processing (Agar spinner muncul)
     setFilesMap(prev => ({
       ...prev,
       [activeDataKey]: prev[activeDataKey].map(f => {
@@ -609,31 +609,32 @@ const App: React.FC = () => {
         } else {
           newMeta.ind = { ...newMeta.ind, ...textData };
         }
-        // Ubah status HANYA untuk file ini jadi Processing agar spinner di samping nama file muncul
+        // Hanya mengubah file ini saja jadi Processing, tidak ngefek ke aplikasi global
         return { ...f, metadata: newMeta, status: ProcessingStatus.Processing }; 
       })
     }));
 
-    // 2. Panggil Satpam AI 1x Saja
     try {
       const activeKey = settings.apiProvider === 'GROQ API' ? groqKeys[0] : apiKeys[0];
+      // 2. Panggil AI untuk membersihkan teks dan menterjemahkan
       const perfected = await smartFixMetadata(textData, language, settings, activeKey);
       
-      // 3. Timpa hasil AI ke State & KEMBALIKAN STATUS KARTU JADI COMPLETED (Spinner hilang)
+      // 3. Timpa hasil AI yang sudah rapi & Kembalikan status kartu jadi Completed (Spinner Mati)
       setFilesMap(prev => ({
         ...prev,
         [activeDataKey]: prev[activeDataKey].map(f => {
           if (f.id !== id) return f;
           const newMeta = { ...f.metadata };
-          newMeta.en = { ...newMeta.en, ...(perfected.en || {}) };
-          newMeta.ind = { ...newMeta.ind, ...(perfected.ind || {}) };
+          // Validasi objek perfected sebelum ditimpa agar tidak error
+          if (perfected && perfected.en) newMeta.en = { ...newMeta.en, ...perfected.en };
+          if (perfected && perfected.ind) newMeta.ind = { ...newMeta.ind, ...perfected.ind };
           return { ...f, metadata: newMeta, status: ProcessingStatus.Completed }; 
         })
       }));
       addLog(`Auto-Fix success for Image ID: ${id.substring(0, 5)}`, 'success', 'system');
     } catch (error) {
       console.error("AI Auto-Fix failed", error);
-      // Kembalikan status jadi Completed agar tidak muter terus jika AI gagal
+      // Kalau gagal (misal koneksi AI putus), kembalikan jadi Completed agar spinner tidak muter selamanya
       setFilesMap(prev => ({
         ...prev,
         [activeDataKey]: prev[activeDataKey].map(f => f.id === id ? { ...f, status: ProcessingStatus.Completed } : f)
@@ -869,12 +870,34 @@ const App: React.FC = () => {
       }
   };
   
+  // 🚀 FUNGSI PAUSE/RESUME & RE-SCANNING
   const togglePause = () => {
       if (!isProcessing) return;
       const nextPausedState = !isPaused;
       setIsPaused(nextPausedState);
       pausedRef.current = nextPausedState;
-      addLog(nextPausedState ? "Processing paused." : "Processing resumed.", nextPausedState ? 'warning' : 'info', processingMode || 'metadata');
+      
+      if (!nextPausedState) {
+          // KETIKA RESUME: Aplikasi nge-scan mandiri dari baris paling atas untuk mencari kartu yang berstatus Pending
+          const processingDataKey = (() => {
+            if (processingMode === 'idea') return settings.ideaMode === 'free' ? 'idea_free' : 'idea_paid';
+            if (processingMode === 'prompt') return settings.promptPlatform === 'file' ? 'prompt_file' : 'prompt_text';
+            if (processingMode === 'qc') return 'qc';
+            return 'metadata_universal';
+          })();
+          
+          setFilesMap(currentMap => {
+              const currentList = currentMap[processingDataKey] || [];
+              const pendingIds = currentList.filter(f => f.status === ProcessingStatus.Pending).map(f => f.id);
+              queueRef.current = pendingIds; // Bangun ulang antrean dari awal
+              return currentMap;
+          });
+
+          addLog("Processing resumed. Re-scanning pending files from top...", 'info', processingMode || 'metadata');
+      } else {
+          // KETIKA PAUSE: Aplikasi ngasih notif dan membuka kunci UI
+          addLog("Processing paused. UI and settings unlocked.", 'warning', processingMode || 'metadata');
+      }
   };
   
   const spawnWorker = async (workerId: number, mode: AppMode) => {
@@ -929,6 +952,7 @@ const App: React.FC = () => {
           activeKeysRef.current.add(selectedKey);
       }
 
+      // 🚀 IDEA MODE 2 (BYPASS AI, MURNI OFFLINE)
       const isLocalExtraction = mode === 'idea' && settings.ideaMode === 'paid';
       const fileIndex = processingFilesRef.current.findIndex(f => f.id === fileId);
 
@@ -942,6 +966,7 @@ const App: React.FC = () => {
         if (!currentFileItem) throw new Error("File aborted or not found");
 
         if (isLocalExtraction) {
+             // BYPASS API AI: Langsung status Completed (cepat, tanpa internet)
              if (fileIndex !== -1) {
                  processingFilesRef.current[fileIndex] = { 
                      ...processingFilesRef.current[fileIndex], 
@@ -1353,7 +1378,8 @@ const App: React.FC = () => {
 
                   {activeTab === 'idea' && (
                       <IdeaSettings 
-                          settings={settings} setSettings={setSettings} isProcessing={isCurrentTabProcessing} 
+                          settings={settings} setSettings={setSettings} 
+                          isProcessing={isCurrentTabProcessing && !isCurrentTabPaused} 
                           ispaidUnlocked={ispaidUnlocked} setIspaidUnlocked={setIspaidUnlocked} 
                           onRestoreHistory={handleRestoreHistory} hasHistory={hasHistory}
                       />
@@ -1362,7 +1388,7 @@ const App: React.FC = () => {
                       <PromptSettings 
                         settings={settings} 
                         setSettings={setSettings} 
-                        isProcessing={isCurrentTabProcessing} 
+                        isProcessing={isCurrentTabProcessing && !isCurrentTabPaused} 
                         onRestoreHistory={handleRestorePromptHistory} 
                         hasHistory={settings.promptPlatform === 'file' ? hasPromptFileHistory : hasPromptTextHistory} 
                         onFilesUpload={(fl) => processFiles(fl, 'prompt')}
@@ -1373,7 +1399,7 @@ const App: React.FC = () => {
                   <MetadataSettings 
                       settings={settings} 
                       setSettings={setSettings} 
-                      isProcessing={isCurrentTabProcessing} 
+                      isProcessing={isCurrentTabProcessing && !isCurrentTabPaused} 
                       onFilesUpload={(fl) => processFiles(fl, 'metadata')}
                       hasVideo={hasVideoFiles}
                   />
@@ -1382,7 +1408,7 @@ const App: React.FC = () => {
                   <QcSettings 
                       settings={settings} 
                       setSettings={setSettings} 
-                      isProcessing={isCurrentTabProcessing} 
+                      isProcessing={isCurrentTabProcessing && !isCurrentTabPaused} 
                       onFilesUpload={(fl) => processFiles(fl, 'qc')}
                       hasVideo={hasVideoFiles}
                   />
@@ -1391,7 +1417,7 @@ const App: React.FC = () => {
                       <ApiKeyPanel 
                           apiKeys={settings.apiProvider === 'GROQ API' ? groqKeys : apiKeys}
                           setApiKeys={settings.apiProvider === 'GROQ API' ? setGroqKeys : setApiKeys}
-                          isProcessing={isProcessing} 
+                          isProcessing={isProcessing && !isPaused} 
                           mode='metadata' 
                           provider={settings.apiProvider}
                           setProvider={(p) => setSettings(prev => ({ ...prev, apiProvider: p as ApiProvider }))}
@@ -1545,7 +1571,7 @@ const App: React.FC = () => {
                                     const targetKey = getActiveDataKey();
                                     setFilesMap(prev => ({ ...prev, [targetKey]: prev[targetKey].map(f => f.id === id ? { ...f, status: ProcessingStatus.Pending } : f) }));
                                 }}
-                                onPreview={setPreviewItem} language={getLanguage(file.id)} onToggleLanguage={handleToggleLanguage} disabled={isCurrentTabProcessing}
+                                onPreview={setPreviewItem} language={getLanguage(file.id)} onToggleLanguage={handleToggleLanguage} disabled={isCurrentTabProcessing && !isCurrentTabPaused}
                             />
                         ))}
                         </div>
@@ -1554,11 +1580,12 @@ const App: React.FC = () => {
                         {currentFiles.map(file => (
                             <FileCard 
                                 key={file.id} item={file} onDelete={handleDelete} onUpdate={handleUpdateMetadata}
+                                onSaveAllText={handleSaveAllText}
                                 onRetry={(id) => {
                                     const targetKey = getActiveDataKey();
                                     setFilesMap(prev => ({ ...prev, [targetKey]: prev[targetKey].map(f => f.id === id ? { ...f, status: ProcessingStatus.Pending } : f) }));
                                 }}
-                                onPreview={setPreviewItem} language={getLanguage(file.id)} onToggleLanguage={handleToggleLanguage} disabled={isCurrentTabProcessing} platform={settings.metadataPlatform}
+                                onPreview={setPreviewItem} language={getLanguage(file.id)} onToggleLanguage={handleToggleLanguage} disabled={isCurrentTabProcessing && !isCurrentTabPaused} platform={settings.metadataPlatform}
                             />
                         ))}
                         </div>
