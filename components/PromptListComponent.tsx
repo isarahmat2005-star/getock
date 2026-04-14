@@ -1,6 +1,6 @@
 import React, { memo, useState, useRef, useEffect } from 'react';
-import { Copy, CheckCircle, Languages, Trash2, Code, Menu, X, Eye, Check } from 'lucide-react';
-import { FileItem, Language } from '../types';
+import { Copy, CheckCircle, Languages, Trash2, Code, Menu, X, Eye, Check, Loader2 } from 'lucide-react';
+import { FileItem, Language, ProcessingStatus } from '../types';
 
 interface Props {
   items: FileItem[];
@@ -8,9 +8,18 @@ interface Props {
   onToggleLanguage: (id: string) => void;
   getLanguage: (id: string) => Language;
   onPreview?: (item: FileItem) => void;
+  // 🚀 TAMBAHAN: Kabel untuk menerima status Pause
+  isPaused?: boolean;
 }
 
-const PromptListComponent: React.FC<Props> = ({ items, onDelete, onToggleLanguage, getLanguage, onPreview }) => {
+const PromptListComponent: React.FC<Props> = ({ 
+    items, 
+    onDelete, 
+    onToggleLanguage, 
+    getLanguage, 
+    onPreview,
+    isPaused = false // Default false jika tidak dikirim
+}) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -76,31 +85,50 @@ const PromptListComponent: React.FC<Props> = ({ items, onDelete, onToggleLanguag
             
             const isFileMode = item.previewUrl && item.previewUrl.length > 0;
 
+            // 🚀 LOGIKA STATUS DAN SPINNER (SINKRON DENGAN PAUSE)
+            const isProcessing = item.status === ProcessingStatus.Processing;
+            const showSpinner = isProcessing && !isPaused;
+
             return (
-               // Gap-3 ini yang mengatur jarak rata (12px) antar elemen di dalamnya
-               <div key={item.id} className="flex gap-3 p-3 hover:bg-gray-50 transition-colors group h-[100px]">
+               <div key={item.id} className={`flex gap-3 p-3 transition-colors group h-[100px] ${
+                  isProcessing ? (isPaused ? 'bg-amber-50/50' : 'bg-blue-50/50') : 'hover:bg-gray-50'
+               }`}>
                   
-                  {/* Bagian Kiri: Row Number */}
+                  {/* Bagian Kiri: Row Number / Spinner Indicator */}
                   <div className="shrink-0 w-8 flex items-center justify-center h-full">
-                     <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded text-xs font-bold text-gray-500">
-                       {index + 1}
+                     <div className={`w-8 h-8 flex items-center justify-center rounded text-xs font-bold ${
+                         showSpinner ? 'bg-blue-100 text-blue-600' :
+                         isProcessing && isPaused ? 'bg-amber-100 text-amber-600' :
+                         'bg-gray-100 text-gray-500'
+                     }`}>
+                         {showSpinner ? (
+                             <Loader2 className="animate-spin w-4 h-4" />
+                         ) : isProcessing && isPaused ? (
+                             <div className="w-2.5 h-2.5 rounded-full bg-amber-500" title="Paused"></div>
+                         ) : (
+                             index + 1
+                         )}
                      </div>
                   </div>
 
-                  {/* Bagian Tengah: Content Prompt (Dibuat flex-1 agar mengisi seluruh ruang kosong) */}
+                  {/* Bagian Tengah: Content Prompt */}
                   <div className="flex-1 min-w-0 h-full">
-                     <div className={`h-full rounded border overflow-hidden flex flex-col ${isJson ? 'bg-gray-50 border-gray-200 font-mono text-xs' : 'bg-white border-gray-100'}`}>
+                     <div className={`h-full rounded border overflow-hidden flex flex-col ${
+                         isJson ? 'bg-gray-50 border-gray-200 font-mono text-xs' : 
+                         isProcessing ? (isPaused ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200') :
+                         'bg-white border-gray-100'
+                     }`}>
                         {isJson && <div className="flex items-center gap-1 text-[10px] text-gray-400 font-bold uppercase p-1.5 border-b border-gray-200 bg-gray-50 shrink-0"><Code size={10} /> JSON Output</div>}
                         
                         <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 p-2 break-words whitespace-pre-wrap">
-                            <p className={`text-sm text-gray-800 ${isJson ? '' : 'font-medium'}`}>
-                                {text || <span className="text-gray-400 italic">No content generated.</span>}
+                            <p className={`text-sm ${isJson ? 'text-gray-800' : 'font-medium'} ${isProcessing ? (isPaused ? 'text-amber-700' : 'text-blue-700') : 'text-gray-800'}`}>
+                                {text || (isProcessing ? 'Processing...' : <span className="text-gray-400 italic">No content generated.</span>)}
                             </p>
                         </div>
                      </div>
                   </div>
 
-                  {/* Bagian Kanan: Actions / Menu Area (Dibuat shrink-0 agar ukurannya pas dengan tombol) */}
+                  {/* Bagian Kanan: Actions / Menu Area */}
                   <div className="shrink-0 flex items-center justify-center h-full">
                       <div className="relative flex items-center justify-center w-9 h-9">
                           {isMenuOpen ? (
@@ -135,7 +163,7 @@ const PromptListComponent: React.FC<Props> = ({ items, onDelete, onToggleLanguag
                                       title={`Bahasa saat ini: ${lang}`}
                                   >
                                       <Languages size={16} />
-                                  </button>
+                                 </button>
 
                                   {/* 4. Hapus */}
                                   <button 
