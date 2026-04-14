@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AppSettings, FileItem, FileMetadata, FileType, Language, AppMode, QcResult } from "../types";
+import { AppSettings, FileItem, FileMetadata, FileType, Language, AppMode } from "../types";
 // IMPORT DAFTAR DREAMSTIME DARI CONSTANTS
 import { CATEGORIES, SHUTTERSTOCK_CATEGORIES, SHUTTERSTOCK_VIDEO_CATEGORIES, DREAMSTIME_CATEGORIES } from "../constants";
 import { extractVideoFrames } from "../utils/helpers";
@@ -143,7 +143,7 @@ export const generateMetadataForFile = async (
   settings: AppSettings,
   providedApiKey: string, 
   mode: AppMode = 'metadata'
-): Promise<{ metadata: FileMetadata; thumbnail?: string; generatedImageUrl?: string; qcResult?: QcResult; }> => {
+): Promise<{ metadata: FileMetadata; thumbnail?: string; generatedImageUrl?: string; }> => {
   const isCanvasMode = settings.apiProvider === 'GEMINI CANVAS';
   const actualApiKey = isCanvasMode 
       ? (process.env.API_KEY || process.env.GEMINI_API_KEY || 'internal_canvas_key') 
@@ -299,27 +299,6 @@ INSTRUKSI DARI PENGGUNA:
 
             promptText = `Buatlah prompt detail berdasarkan gambar/video ini. ${instruksiTambahan}`;
         }
-        
-        ATURAN PENILAIAN STRICT:
-        1. score: Nilai 1-100 (Seberapa laku dan layak aset ini dijual).
-        2. status: Harus salah satu dari "Pass" (Lolos tanpa masalah), "Warning" (Ada catatan kecil), atau "Fail" (Ditolak mutlak karena cacat/melanggar).
-        3. technicalIssues: Array string. Sebutkan jika ada blur, noise parah, overexposed, pencahayaan buruk, atau cacat anatomi AI (jari aneh, dll). KOSONGKAN array jika kualitas teknis sempurna.
-        4. ipIssues: Array string. Sebutkan JIKA ADA PELANGGARAN HAK CIPTA/TRADEMARK (logo Nike, desain Apple, botol Coca-Cola, plat nomor mobil, atau wajah orang yang butuh rilis model). KOSONGKAN array jika murni aman.
-        5. commercialAdvice: 1-2 kalimat saran komersial dalam Bahasa Indonesia. Apa nilai jual gambar ini atau peringatan mengapa gambar ini akan ditolak kurator.`;
-
-        promptText = `Analisis gambar/video ini secara mendalam seperti seorang kurator galak. Periksa cacat teknis, cacat AI, potensi pelanggaran hak cipta, dan nilai komersialnya.`;
-
-        outputSchema = {
-          type: Type.OBJECT,
-          properties: {
-            score: { type: Type.INTEGER },
-            status: { type: Type.STRING },
-            technicalIssues: { type: Type.ARRAY, items: { type: Type.STRING } },
-            ipIssues: { type: Type.ARRAY, items: { type: Type.STRING } },
-            commercialAdvice: { type: Type.STRING }
-          },
-          required: ["score", "status", "technicalIssues", "ipIssues", "commercialAdvice"]
-        };
     }
 
     let parts: any[] = [];
