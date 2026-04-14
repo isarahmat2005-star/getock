@@ -30,9 +30,22 @@ const convertSvgToWhiteBgJpeg = async (file: File): Promise<{ inlineData: { data
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
+        // Kompresi ekstrim untuk SVG (tetapkan max 320px)
+        const MAX_SIZE = 320;
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > height && width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+        } else if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+        }
+
         const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
+        canvas.width = Math.round(width);
+        canvas.height = Math.round(height);
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           reject(new Error("Canvas context failed"));
@@ -40,8 +53,10 @@ const convertSvgToWhiteBgJpeg = async (file: File): Promise<{ inlineData: { data
         }
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Kualitas JPEG 0.4 (Super Burik, ukuran file sekecil debu, tapi AI tetap bisa baca)
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.4);
         const base64String = dataUrl.split(',')[1];
         resolve({
           inlineData: {
@@ -63,8 +78,9 @@ const compressImage = async (file: File): Promise<{ inlineData: { data: string; 
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const MAX_WIDTH = 512;  
-        const MAX_HEIGHT = 512;
+        // 🚀 EXTREME COMPRESSION: Turun dari 512px ke 320px
+        const MAX_WIDTH = 320;  
+        const MAX_HEIGHT = 320;
         
         let width = img.width;
         let height = img.height;
@@ -80,15 +96,17 @@ const compressImage = async (file: File): Promise<{ inlineData: { data: string; 
           }
         }
         const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = Math.round(width);
+        canvas.height = Math.round(height);
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           reject(new Error("Canvas context failed"));
           return;
         }
-        ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // 🚀 EXTREME COMPRESSION: Kualitas diturunkan dari 0.6 jadi 0.5
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.5); 
         
         const base64String = dataUrl.split(',')[1];
         resolve({
