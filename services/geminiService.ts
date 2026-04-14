@@ -129,12 +129,12 @@ STEP 3: LOGIKA KATA KUNCI (STRICT 1-WORD & ZERO SPAM)
 STEP 4: SHUTTERSTOCK BLACKLIST (HARAM MUTLAK)
 - NO FILE TYPES/STYLES: DILARANG KERAS menulis jenis file atau gaya seni di Title, Deskripsi, maupun Keyword (HARAM: vector, illustration, photo, drawing, digital art, 3d render, clipart).
 - NO TECH SPECS: DILARANG menulis spesifikasi kamera/alat (HARAM: 4k, 8k, hd, resolution, gopro, drone, 60fps, slow motion, timelapse).
-- NO TRADEMARKS/BRANDS: DILARANG KERAS menyebutkan nama merk, logo, atau tokoh publik. Ganti menjadi istilah generik! (Contoh: "iPhone" -> "smartphone", "Macbook" -> "laptop", "Nike" -> "shoes").
+- NO TRADEMARKS/BRANDS: DILARANG KERAS menyebutkan nama merk, logo, atau tokoh publik. Ganti menjadi istilah generik!
 
-STEP 5: ASSIGN TRIPLE CATEGORY (MANDATORY)
+STEP 5: ASSIGN TRIPLE CATEGORY (MANDATORY STRUKTURAL)
 Anda WAJIB memberikan TIGA jenis kategori untuk 3 platform yang berbeda secara bersamaan:
 1. 'categoryAdobe': Pilih TEPAT 1 Kategori yang paling akurat dari DAFTAR ADOBE.
-2. 'categoryShutter': Pilih TEPAT 2 Kategori (ID TEKS) yang paling akurat dari DAFTAR SHUTTERSTOCK. Pisahkan dengan koma (contoh: "Abstract, Nature").
+2. 'categoryShutter': Pilih TEPAT 2 Kategori (ID TEKS) yang paling akurat dari DAFTAR SHUTTERSTOCK. Pisahkan dengan koma (contoh: "Abstract, Nature"). DILARANG KOSONG!
 3. 'categoryDream': Pilih TEPAT 3 Kategori (ANGKA ID) yang paling akurat dari DAFTAR DREAMSTIME. Pisahkan dengan koma (contoh: "112, 145, 105"). DILARANG KOSONG!
 `;
 
@@ -174,8 +174,10 @@ export const generateMetadataForFile = async (
         const maxChars = settings.titleMax || 150;
         const kwTotal = settings.slideKeyword || 40;
         
+        // LOGIKA MASTER KEYWORD: Jika ada instruksi, paksa AI hasilkan 100 keyword sebagai stok bahan baku
         const isGroq = settings.apiProvider === 'GROQ API';
-        const kwTargetAI = isGroq ? kwTotal + 15 : kwTotal; // Minta lebih untuk Groq
+        const baseKwTarget = isGroq ? kwTotal + 15 : kwTotal;
+        const kwTargetAI = settings.metadataCustomInstruction ? 100 : baseKwTarget;
 
         systemInstruction = `LANGUAGE: Hasilkan field 'en' dalam Bahasa Inggris dan field 'ind' dalam Bahasa Indonesia yang merupakan terjemahan profesionalnya.\n\n${SUPREME_METADATA_PROTOCOL}`
             .replace('[KW_COUNT]', kwTargetAI.toString());
@@ -185,23 +187,15 @@ export const generateMetadataForFile = async (
         
         promptText = `ANALISIS MANDATORI: Perhatikan aset ini. JANGAN menebak. Identifikasi objek, material, dan warna yang eksak. Tulis metadata yang 100% literal dan SEO-optimized sesuai protokol Supreme.\n\n!!! CRITICAL INSTRUCTIONS (MUST OBEY) !!!\n`;
 
-        if (isGroq) {
-            // PROMPT GROQ
-            promptText += `- TITLE LENGTH: WAJIB detail agar panjang kalimat antara ${minChars} hingga ${maxChars} karakter.\n`;
-            promptText += `- DESCRIPTION RULE: Field Description WAJIB diisi. Isinya WAJIB merupakan parafrase (sinonim) dari kalimat Title. Panjang kalimatnya juga WAJIB sama dengan Title, yaitu antara ${minChars} hingga ${maxChars} karakter. HARAM MENYALIN TEKS TITLE SECARA IDENTIK!\n`;
-            promptText += `- KEYWORD COUNT: Kami butuh stok kata! WAJIB hasilkan minimal ${kwTargetAI} kata kunci tunggal (dipisah koma).\n`;
-        } else {
-            // PROMPT GEMINI
-            promptText += `- TITLE LENGTH: WAJIB antara ${minChars} sampai ${maxChars} karakter.\n`;
-            promptText += `- DESCRIPTION RULE: Field Description WAJIB diisi. Isinya WAJIB merupakan parafrase (sinonim) dari kalimat Title. Panjang kalimatnya juga WAJIB sama dengan Title, yaitu antara ${minChars} sampai ${maxChars} karakter. HARAM MENYALIN TEKS TITLE SECARA IDENTIK!\n`;
-            promptText += `- KEYWORD COUNT: WAJIB menghasilkan tepat ${kwTotal} kata kunci tunggal (dipisah koma). Dilarang kurang, dilarang lebih!\n`;
-        }
-
+        // ATURAN DEFAULT UI
+        promptText += `- TITLE LENGTH: Panjang kalimat antara ${minChars} hingga ${maxChars} karakter.\n`;
+        promptText += `- DESCRIPTION RULE: Field Description WAJIB diisi. Isinya WAJIB merupakan parafrase dari Title. Panjang antara ${minChars} hingga ${maxChars} karakter.\n`;
+        promptText += `- KEYWORD COUNT: WAJIB hasilkan minimal ${kwTargetAI} kata kunci tunggal (dipisah koma).\n`;
         promptText += `- KEYWORD FORMAT: WAJIB 1 KATA TUNGGAL PER KEYWORD. Dilarang keras menggunakan spasi di dalam keyword!\n`;
 
-        // === SUNTIKAN INSTRUKSI KUSTOM DARI UI ===
+        // === SUNTIKAN INSTRUKSI KUSTOM DARI UI (SABDA RAJA / PELECUT FATAL) ===
         if (settings.metadataCustomInstruction) {
-            promptText += `\n\n!!! SUPREME OVERRIDE RULE !!!\nINSTRUKSI KHUSUS METADATA: "${settings.metadataCustomInstruction}"\nPERINTAH INI ADALAH HUKUM TERTINGGI. Jika instruksi ini meminta jumlah keyword yang berbeda (misal 70) atau batasan karakter title/deskripsi yang berbeda (misal max 130), ABAIKAN aturan default di atas dan WAJIB IKUTI instruksi khusus ini secara mutlak!`;
+            promptText += `\n\n!!! PERINTAH EKSTERNAL USER (WAJIB PATUH MUTLAK) !!!\n"${settings.metadataCustomInstruction}"\nInstruksi ini adalah PELECUT dan HUKUM TERTINGGI untuk hasil akhir metadata. Jika instruksi ini meminta batas karakter (misal tidak lebih dari angka tertentu) atau batasan lainnya yang bertentangan dengan aturan default di atas, Anda WAJIB memastikan hasil akhirnya menuruti instruksi eksternal ini secara akurat tanpa bantahan. Ingat maksud dan batasan ketat dari perintah ini!`;
         }
       
         if (settings.negativeMetadata) {
@@ -426,11 +420,13 @@ INSTRUKSI DARI PENGGUNA:
         parsed = JSON.parse(response.text);
     }
 
-    // === PISAU CUKUR KEYWORD (SILENT SLICER) ===
+    // === PISAU CUKUR KEYWORD (SMART BYPASS) ===
     if (mode === 'metadata' && parsed) {
         const targetK = settings.slideKeyword || 40;
-        // Deteksi jika user override urusan keyword, matikan pisau cukur otomatis!
-        const overrideKeyword = settings.metadataCustomInstruction && /keyword|kata kunci/i.test(settings.metadataCustomInstruction);
+        
+        // MATIKAN PISAU CUKUR JIKA ADA INSTRUKSI KHUSUS
+        // Biarkan data mentah (Master Stock yang 100 keywords) utuh dikirim ke memori aplikasi.
+        const shouldBypassSlice = !!settings.metadataCustomInstruction;
         
         const cleanAndSliceKeywords = (rawKws: string) => {
             if (!rawKws) return "";
@@ -443,8 +439,9 @@ INSTRUKSI DARI PENGGUNA:
             }
             
             arr = [...new Set(arr)]; 
-            // JIKA TIDAK ADA OVERRIDE KEYWORD BARU KITA POTONG
-            if (!overrideKeyword && arr.length > targetK) {
+            
+            // PISAU CUKUR HANYA BEKERJA JIKA TIDAK ADA INSTRUKSI EKSTERNAL USER
+            if (!shouldBypassSlice && arr.length > targetK) {
                 arr = arr.slice(0, targetK); 
             }
             return arr.join(', ');
@@ -531,7 +528,7 @@ Tugas Mutlak Anda:
 2. TITLE & DESCRIPTION: WAJIB perbaiki grammar. DILARANG KERAS menggunakan tanda koma (,) di field ini!
 3. KEYWORDS: Hapus tanda strip (-). Format harus kata tunggal dipisah koma.
 4. BLACKLIST: HAPUS kata-kata ini jika ada: ${settings.negativeMetadata}
-${settings.metadataCustomInstruction ? `5. SUPREME OVERRIDE RULE: "${settings.metadataCustomInstruction}". Instruksi ini adalah HUKUM TERTINGGI untuk format/jumlah metadata. Wajib ikuti instruksi ini di atas aturan lainnya!` : ''}
+${settings.metadataCustomInstruction ? `5. SUPREME OVERRIDE RULE: "${settings.metadataCustomInstruction}". Instruksi ini adalah PELECUT dan HUKUM TERTINGGI untuk hasil akhir metadata. Wajib patuhi instruksi ini (misal tentang batas panjang karakter) sebagai prioritas utama di atas aturan lainnya!` : ''}
 
 Input User (${sourceLanguage}):
 Title: "${content.title || ''}"
