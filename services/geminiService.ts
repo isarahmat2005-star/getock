@@ -299,11 +299,6 @@ INSTRUKSI DARI PENGGUNA:
 
             promptText = `Buatlah prompt detail berdasarkan gambar/video ini. ${instruksiTambahan}`;
         }
-    
-    } else if (mode === 'qc') {
-        temperature = 0.2; 
-        
-        systemInstruction = `Anda adalah Kurator dan Reviewer Agensi Microstock Galak (seperti Adobe Stock atau Shutterstock). Tugas Anda adalah mengkurasi kelayakan komersial, teknis, dan legal dari aset visual yang dikirim.
         
         ATURAN PENILAIAN STRICT:
         1. score: Nilai 1-100 (Seberapa laku dan layak aset ini dijual).
